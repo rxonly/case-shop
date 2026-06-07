@@ -1,9 +1,18 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
+import { cartStorage } from '../utils/api';
+import { useState, useEffect } from 'react';
 
 export default function Navbar() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [cartCount, setCartCount] = useState(0);
+
+  // Обновляем счётчик при каждом изменении маршрута
+  useEffect(() => {
+    setCartCount(cartStorage.getCart().length);
+  }, [location]);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -16,13 +25,27 @@ export default function Navbar() {
         </NavLink>
         {user && (
           <>
+            <NavLink to="/cart" className={({ isActive }) => `navbar__link${isActive ? ' active' : ''}`}>
+              🛒 Корзина {cartCount > 0 && (
+                <span style={{
+                  background: 'var(--accent)',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  padding: '1px 7px',
+                  fontSize: '0.75rem',
+                  marginLeft: 4,
+                }}>
+                  {cartCount}
+                </span>
+              )}
+            </NavLink>
             <NavLink to="/inventory" className={({ isActive }) => `navbar__link${isActive ? ' active' : ''}`}>
               Инвентарь
             </NavLink>
             <NavLink to="/profile" className={({ isActive }) => `navbar__link${isActive ? ' active' : ''}`}>
               Профиль
             </NavLink>
-            {isAdmin && (
+            {user.role === 'admin' && (
               <NavLink to="/admin" className={({ isActive }) => `navbar__link${isActive ? ' active' : ''}`}>
                 🔧 Админ
               </NavLink>

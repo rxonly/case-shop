@@ -8,6 +8,7 @@ import Inventory from './pages/Inventory';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import { useAuth } from './utils/AuthContext';
+import Cart from './pages/Cart';
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export default function App() {
     <>
       <Navbar />
       <Routes>
+        <Route path="/cart" element={<Cart />} />
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

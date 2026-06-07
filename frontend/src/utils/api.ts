@@ -85,3 +85,22 @@ export const gameApi = {
 };
 
 export default api;
+
+// Корзина в LocalStorage
+export const cartStorage = {
+  getCart: (): number[] => {
+    const data = localStorage.getItem('caseshop_cart');
+    return data ? JSON.parse(data) : [];
+  },
+  addToCart: (caseId: number) => {
+    const cart = cartStorage.getCart();
+    cart.push(caseId); // убрали проверку на дубликат
+    localStorage.setItem('caseshop_cart', JSON.stringify(cart));
+  },
+  removeOne: (index: number) => {
+    const cart = cartStorage.getCart();
+    cart.splice(index, 1); // удаляем только одну позицию по индексу
+    localStorage.setItem('caseshop_cart', JSON.stringify(cart));
+  },
+  clearCart: () => localStorage.removeItem('caseshop_cart'),
+};
