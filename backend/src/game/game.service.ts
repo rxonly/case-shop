@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
@@ -7,6 +7,8 @@ import { InventoryService } from '../inventory/inventory.service';
 
 @Injectable()
 export class GameService {
+  private readonly logger = new Logger(GameService.name);
+
   constructor(
     @InjectRepository(User) private usersRepo: Repository<User>,
     private casesService: CasesService,
@@ -14,6 +16,8 @@ export class GameService {
   ) {}
 
   async openCase(userId: number, caseId: number) {
+    this.logger.log(`Пользователь #${userId} открывает кейс #${caseId}`);
+
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Пользователь не найден');
 
@@ -25,21 +29,19 @@ export class GameService {
 
     const price = Number(caseItem.price);
     if (Number(user.balance) < price) {
+      this.logger.warn(`Пользователь #${userId} — недостаточно средств (баланс: ${user.balance}, цена: ${price})`);
       throw new BadRequestException('Недостаточно средств на балансе');
     }
 
-    // Списываем баланс
     await this.usersRepo.decrement({ id: userId }, 'balance', price);
 
-    // Случайный выбор предмета
     const items = caseItem.items;
     const randomItem = items[Math.floor(Math.random() * items.length)];
 
-    // Добавляем в инвентарь
     const inv = await this.inventoryService.addItem(userId, randomItem.id);
-
-    // Обновлённый баланс
     const updatedUser = await this.usersRepo.findOne({ where: { id: userId } });
+
+    this.logger.log(`Пользователь #${userId} выиграл предмет "${randomItem.name}" из кейса #${caseId}`);
 
     return {
       item: randomItem,
@@ -52,6 +54,7 @@ export class GameService {
     if (amount <= 0) throw new BadRequestException('Сумма должна быть положительной');
     await this.usersRepo.increment({ id: userId }, 'balance', amount);
     const user = await this.usersRepo.findOne({ where: { id: userId } });
+    this.logger.log(`Пользователь #${userId} пополнил баланс на ${amount} ₽`);
     return { balance: user?.balance };
   }
 }
